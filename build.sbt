@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
     trace4catsJaeger,
     logback,
     compilerPlugin(kindProjector),
-    compilerPlugin(betterMonadicFor),
+    compilerPlugin(betterMonadicFor)
   )
 
 scalacOptions ++= List("-Ymacro-annotations", "-Wconf:any:wv")
