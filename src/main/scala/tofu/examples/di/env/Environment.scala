@@ -27,7 +27,7 @@ case class BaseEnv[F[_]](
   genRandom: GenRandom[F],
   wrapper: Wrapper[F]
 ) {
-  final def imapK[G[_]: Defer: Applicative](f: F ~> G)(@unused g: G ~> F): BaseEnv[G] =
+  final def imapK[G[_]: Defer: Applicative](f: F ~> G)(g: G ~> F): BaseEnv[G] =
     BaseEnv(
       config,
       httpClient.mapK(f),
