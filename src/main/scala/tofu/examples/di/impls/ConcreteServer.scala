@@ -6,8 +6,7 @@ import cats.Monad
 import io.janstenpickle.trace4cats.inject.EntryPoint
 import tofu.common.Console
 import tofu.generate.GenRandom
-import tofu.lift.IsoK
-import tofu.BracketThrow
+import tofu.{BracketThrow, WithProvide}
 import tofu.examples.di.algebras.{BusinessLogicRoutes, Server}
 import tofu.examples.di.env.Ctx
 import tofu.examples.di.model.Req
@@ -17,15 +16,14 @@ import tofu.syntax.monadic._
 import scala.concurrent.duration._
 
 class ConcreteServer[F[_]: BracketThrow: Timer: EntryPoint: GenRandom: Console, G[_]: BusinessLogicRoutes](
-  mkIsoK: Ctx[F] => IsoK[F, G]
+  implicit WP: WithProvide[G, F, Ctx[F]]
 ) extends Server[F] {
   def serve: F[Unit] = (Timer[F].sleep(1.second) >> loop).foreverM
 
   def loop: F[Unit] =
     implicitly[EntryPoint[F]].root("serve-event").use {
       span =>
-        implicit val isoK: IsoK[G, F] = mkIsoK(Ctx(span)).inverse
-        val brF: BusinessLogicRoutes[F] = BusinessLogicRoutes[G].ilift[F]
+        val brF = BusinessLogicRoutes[G].imapK[F](WP.runContextK(Ctx(span)))(WP.liftF)
         for {
           rnd <- GenRandom.nextInt(1000)
           req =
@@ -45,7 +43,7 @@ class ConcreteServer[F[_]: BracketThrow: Timer: EntryPoint: GenRandom: Console, 
 
 object ConcreteServer {
   def make[I[_]: Monad, F[_]: BracketThrow: Timer: EntryPoint: GenRandom: Console, G[_]: BusinessLogicRoutes](
-    mkIsoK: Ctx[F] => IsoK[F, G]
+    implicit WP: WithProvide[G, F, Ctx[F]]
   ): Resource[I, Server[F]] =
-    new ConcreteServer[F, G](mkIsoK).pure[Resource[I, *]]
+    new ConcreteServer[F, G].pure[Resource[I, *]]
 }

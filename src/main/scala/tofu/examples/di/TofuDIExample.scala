@@ -2,6 +2,7 @@ package tofu.examples.di
 
 import cats.effect.{ExitCode, IO, IOApp, Resource, Timer}
 import cats.tagless.syntax.functorK._
+import tofu.WithProvide
 import tofu.concurrent._
 import tofu.examples.di.algebras._
 import tofu.examples.di.config.Config
@@ -12,7 +13,6 @@ import tofu.examples.di.util.implicits.genRandom._
 import tofu.examples.di.util.implicits.timer._
 import tofu.examples.di.util.implicits.trace._
 import tofu.generate.GenRandom
-import tofu.lift.IsoK
 import tofu.syntax.funk.funK
 
 object TofuDIExample extends IOApp {
@@ -26,7 +26,8 @@ object TofuDIExample extends IOApp {
     val res: Resource[IO, Server[IO]] = for {
       baseEnv <- initBaseEnv
       bizEnv <- initBizEnv
-      server <- ConcreteServer.make[I, Eff, CtxEff](mkIsoK(baseEnv, bizEnv))
+      implicit0(wp: WithProvide[CtxEff, Eff, Ctx[Eff]]) = mkProvide(baseEnv, bizEnv)
+      server <- ConcreteServer.make[I, Eff, CtxEff]
     } yield server.mapK(funK(_.run(baseEnv)))
 
     res.use(_.serve).as(ExitCode.Success)
@@ -63,11 +64,12 @@ object TofuDIExample extends IOApp {
       bizRoutes <- ConcreteBusinessLogicRoutes.make[I, CtxEff]
     } yield BizEnv(bizLogic = bizLogic, bizRoutes = bizRoutes)
 
-  def mkIsoK(env: BaseEnv[Eff], bizEnv: BizEnv[CtxEff])(ctx: Ctx[Eff]): IsoK[Eff, CtxEff] =
-    new IsoK[Eff, CtxEff] {
-      def to[A](fa: Eff[A]): CtxEff[A] =
-        ContextT.liftF(fa)
-      def from[A](ga: CtxEff[A]): Eff[A] =
-        ga.run(CtxEnv(env.imapK(tof)(fromF), bizEnv, ctx.imapK(tof)(fromF)))
+  //TODO: could it be done easier?
+  def mkProvide(baseEnv: BaseEnv[Eff], bizEnv: BizEnv[CtxEff]): WithProvide[CtxEff, Eff, Ctx[Eff]] = {
+    new WithProvide[CtxEff, Eff, Ctx[Eff]] {
+      def lift[A](fa: Eff[A]): CtxEff[A] = ContextT.liftF(fa)
+      def runContext[A](fa: CtxEff[A])(ctx: env.Ctx[Eff]): Eff[A] =
+        fa.run(CtxEnv(baseEnv.imapK(liftF)(runContextK(ctx)), bizEnv, ctx.imapK(liftF)(runContextK(ctx))))
     }
+  }
 }
