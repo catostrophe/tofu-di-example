@@ -18,9 +18,9 @@ import tofu.syntax.funk.funK
 object TofuDIExample extends IOApp {
 
   type I[+A] = IO[A]
-  type Init[+A] = Resource[IO, A]
-  type Eff[+A] = ContextT[IO, BaseEnv, A]
-  type CtxEff[+A] = ContextT[IO, CtxEnv, A]
+  type Init[+A] = Resource[I, A]
+  type Eff[+A] = ContextT[I, BaseEnv, A]
+  type CtxEff[+A] = ContextT[Eff, CtxEnv, A]
 
   def run(args: List[String]): IO[ExitCode] = {
     val res: Resource[IO, Server[IO]] = for {
@@ -66,8 +66,8 @@ object TofuDIExample extends IOApp {
   def mkIsoK(env: BaseEnv[Eff], bizEnv: BizEnv[CtxEff])(ctx: Ctx[Eff]): IsoK[Eff, CtxEff] =
     new IsoK[Eff, CtxEff] {
       def to[A](fa: Eff[A]): CtxEff[A] =
-        ContextT.lift(fa.run(env))
+        ContextT.liftF(fa)
       def from[A](ga: CtxEff[A]): Eff[A] =
-        ContextT.lift(ga.run(CtxEnv(env.imapK(tof)(fromF), bizEnv, ctx.imapK(tof)(fromF))))
+        ga.run(CtxEnv(env.imapK(tof)(fromF), bizEnv, ctx.imapK(tof)(fromF)))
     }
 }
