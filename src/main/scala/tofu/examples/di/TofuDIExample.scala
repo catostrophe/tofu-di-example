@@ -22,8 +22,8 @@ object TofuDIExample extends IOApp {
   type Eff[+A] = ContextT[I, BaseEnv, A]
   type CtxEff[+A] = ContextT[Eff, CtxEnv, A]
 
-  def run(args: List[String]): IO[ExitCode] = {
-    val res: Resource[IO, Server[IO]] = for {
+  def run(args: List[String]): I[ExitCode] = {
+    val res: Resource[I, Server[I]] = for {
       baseEnv <- initBaseEnv
       bizEnv <- initBizEnv
       implicit0(wp: WithProvide[CtxEff, Eff, Ctx[Eff]]) = mkProvide(baseEnv, bizEnv)
@@ -41,9 +41,9 @@ object TofuDIExample extends IOApp {
       profile <- DBProfile.make[I, Eff]
       kafka <- ConsoleKafka.make[I, Eff]
       httpClient <- DummyHttpClient.make[I, Eff]
-      entryPoint <- JaegerEntryPoint.make[IO, Eff]
+      entryPoint <- JaegerEntryPoint.make[I, Eff]
       genRandom: GenRandom[Eff] <- Resource.liftF(GenRandom.instance[I, Eff]())
-      _timer: Timer[Eff] = Timer[IO].mapK(ContextT.liftF)
+      _timer: Timer[Eff] = Timer[I].mapK(ContextT.liftF)
       wrapper = LogWrapper.make[Eff]
     } yield BaseEnv(
       config = config,

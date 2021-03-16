@@ -21,7 +21,7 @@ class ConcreteServer[F[_]: BracketThrow: Timer: EntryPoint: GenRandom: Console, 
   def serve: F[Unit] = (Timer[F].sleep(1.second) >> loop).foreverM
 
   def loop: F[Unit] =
-    implicitly[EntryPoint[F]].root("serve-event").use {
+    EntryPoint[F].root("serve-event").use {
       span =>
         val brF = BusinessLogicRoutes[G].imapK[F](WP.runContextK(Ctx(span)))(WP.liftF)
         for {
