@@ -4,7 +4,7 @@ name := "tofu-di-example"
 
 version := "0.1"
 
-scalaVersion := "2.13.3"
+scalaVersion := "2.13.5"
 
 libraryDependencies ++= Seq(
     catsCore,
@@ -26,7 +26,7 @@ libraryDependencies ++= Seq(
     compilerPlugin(betterMonadicFor)
   )
 
-scalacOptions ++= List("-Ymacro-annotations", "-Wconf:any:wv")
+scalacOptions ++= List("-Ymacro-annotations", "-Wconf:cat=unused-locals:s,cat=unused-params:s,any:wv")
 //scalacOptions ~= filterConsoleScalacOptions //disable some strict lints
 
 Global / cancelable := true
