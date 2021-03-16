@@ -2,9 +2,9 @@ package tofu.examples.di.util.syntax
 
 import cats.effect.Resource
 import cats.{Applicative, Defer, ~>}
-import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 import io.janstenpickle.trace4cats.inject.{EntryPoint, Trace}
-import io.janstenpickle.trace4cats.model.SpanKind
+import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 import tofu.lift.Lift
 
 object trace {
@@ -16,9 +16,15 @@ object trace {
   implicit final class EntryPointOps[F[_]](private val ep: EntryPoint[F]) extends AnyVal {
     def mapK[G[_]: Defer: Applicative](fk: F ~> G): EntryPoint[G] =
       new EntryPoint[G] {
-        def root(name: String, kind: SpanKind): Resource[G, Span[G]] = ep.root(name, kind).mapK(fk).map(_.mapK(fk))
-        def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[G, Span[G]] =
-          ep.continueOrElseRoot(name, kind, headers).mapK(fk).map(_.mapK(fk))
+        def root(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[G, Span[G]] =
+          ep.root(name, kind, errorHandler).mapK(fk).map(_.mapK(fk))
+        def continueOrElseRoot(
+          name: String,
+          kind: SpanKind,
+          headers: TraceHeaders,
+          errorHandler: ErrorHandler
+        ): Resource[G, Span[G]] =
+          ep.continueOrElseRoot(name, kind, headers, errorHandler).mapK(fk).map(_.mapK(fk))
       }
     def lift[G[_]: Defer: Applicative](implicit L: Lift[F, G]): EntryPoint[G] = mapK(L.liftF)
   }

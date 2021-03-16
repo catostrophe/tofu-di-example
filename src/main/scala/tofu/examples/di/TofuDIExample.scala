@@ -13,11 +13,9 @@ import tofu.examples.di.util.implicits.timer._
 import tofu.examples.di.util.implicits.trace._
 import tofu.generate.GenRandom
 import tofu.lift.IsoK
-import tofu.optics._
-import tofu.WithLocal
 import tofu.syntax.funk.funK
 
-object TofuDIExample extends IOApp with OpticsDeriv {
+object TofuDIExample extends IOApp {
 
   type I[+A] = IO[A]
   type Init[+A] = Resource[IO, A]
@@ -72,17 +70,4 @@ object TofuDIExample extends IOApp with OpticsDeriv {
       def from[A](ga: CtxEff[A]): Eff[A] =
         ContextT.lift(ga.run(CtxEnv(env.imapK(tof)(fromF), bizEnv, ctx.imapK(tof)(fromF))))
     }
-}
-
-trait OpticsDeriv extends OpticsDerivLow {
-  implicit def ctxEnvSubcontext[F[_], C](implicit e: CtxEnv[F] Contains C, wl: WithLocal[F, CtxEnv[F]]): F WithLocal C =
-    WithLocal[F, CtxEnv[F]].subcontext(e)
-}
-
-trait OpticsDerivLow {
-  implicit def baseEnvSubcontext[F[_], C](
-    implicit e: BaseEnv[F] Contains C,
-    wl: WithLocal[F, BaseEnv[F]]
-  ): F WithLocal C =
-    WithLocal[F, BaseEnv[F]].subcontext(e)
 }

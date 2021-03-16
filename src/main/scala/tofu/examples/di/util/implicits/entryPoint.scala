@@ -2,9 +2,9 @@ package tofu.examples.di.util.implicits
 
 import cats.FlatMap
 import cats.effect.Resource
-import io.janstenpickle.trace4cats.Span
+import io.janstenpickle.trace4cats.{ErrorHandler, Span}
 import io.janstenpickle.trace4cats.inject.EntryPoint
-import io.janstenpickle.trace4cats.model.SpanKind
+import io.janstenpickle.trace4cats.model.{SpanKind, TraceHeaders}
 import tofu.HasContext
 import tofu.higherKind.Embed
 import tofu.syntax.monadic._
@@ -14,9 +14,15 @@ object entryPoint {
     new Embed[EntryPoint] {
       def embed[F[_]](ft: F[EntryPoint[F]])(implicit evidence$1: FlatMap[F]): EntryPoint[F] =
         new EntryPoint[F] {
-          def root(name: String, kind: SpanKind): Resource[F, Span[F]] = Resource.suspend(ft.map(_.root(name, kind)))
-          def continueOrElseRoot(name: String, kind: SpanKind, headers: Map[String, String]): Resource[F, Span[F]] =
-            Resource.suspend(ft.map(_.continueOrElseRoot(name, kind, headers)))
+          def root(name: String, kind: SpanKind, errorHandler: ErrorHandler): Resource[F, Span[F]] =
+            Resource.suspend(ft.map(_.root(name, kind, errorHandler)))
+          def continueOrElseRoot(
+            name: String,
+            kind: SpanKind,
+            headers: TraceHeaders,
+            errorHandler: ErrorHandler
+          ): Resource[F, Span[F]] =
+            Resource.suspend(ft.map(_.continueOrElseRoot(name, kind, headers, errorHandler)))
         }
     }
 
