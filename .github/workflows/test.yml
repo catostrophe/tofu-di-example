@@ -12,6 +12,10 @@ jobs:
   testjob:
     name: Test Job
     if: (github.ref == 'refs/heads/master'|| startsWith(github.ref, 'refs/tags/v')) && (github.event_name = 'workflow_dispatch')
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Echo
         run: echo Hello
