@@ -1,0 +1,17 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: ['**']
+    tags: [v*]
+  workflow_dispatch:
+
+jobs:
+  testjob:
+    name: Test Job
+    if: (github.ref == 'refs/heads/master'|| startsWith(github.ref, 'refs/tags/v')) && (github.event_name = 'workflow_dispatch')
+    steps:
+      - name: Echo
+        run: echo Hello
