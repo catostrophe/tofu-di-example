@@ -19,6 +19,3 @@ jobs:
     steps:
       - name: Echo
         run: echo Hello
-        
-      - name: Run docker compose
-        run: docker compose up -d
