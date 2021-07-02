@@ -6,7 +6,7 @@ object Dependencies {
     val cats = "2.4.2"
     val catsEffect = "2.3.3"
     val catsTagless = "0.12"
-    val derevo = "0.12.1"
+    val derevo = "0.12.6"
     val tofu = "0.10.0"
     val trace4cats = "0.9.0"
 
