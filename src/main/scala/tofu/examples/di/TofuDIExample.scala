@@ -35,14 +35,14 @@ object TofuDIExample extends IOApp {
 
   def initBaseEnv: Init[BaseEnv[Eff]] =
     for {
-      config <- Resource.liftF(Config.load[I])
+      config <- Resource.eval(Config.load[I])
       db <- DummyDB.make[I, Eff]
       security <- DBSecurity.make[I, Eff]
       profile <- DBProfile.make[I, Eff]
       kafka <- ConsoleKafka.make[I, Eff]
       httpClient <- DummyHttpClient.make[I, Eff]
       entryPoint <- JaegerEntryPoint.make[I, Eff]
-      genRandom: GenRandom[Eff] <- Resource.liftF(GenRandom.instance[I, Eff]())
+      genRandom: GenRandom[Eff] <- Resource.eval(GenRandom.instance[I, Eff]())
       _timer: Timer[Eff] = Timer[I].mapK(ContextT.liftF)
       wrapper = LogWrapper.make[Eff]
     } yield BaseEnv(
